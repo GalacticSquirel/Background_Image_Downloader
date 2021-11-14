@@ -11,20 +11,28 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
 import os
-from kivy.uix.slider import Slider
-from kivy.uix.button import Button
+import requests
 
 user_screen_width, user_screen_height= pyautogui.size()
 program_width = user_screen_width/3
 program_height = user_screen_height/2
 Window.size = (program_width, program_height)
+if "assets" in os.listdir():
+    for file in os.listdir("assets"):
+        os.remove("assets/" + file)
+    os.rmdir("assets")
 if not "assets" in os.listdir():
     os.mkdir("assets")
 if not "config.json" in os.listdir("assets"):
     config = open("assets\\config.json", "w")
     config.write
     config.close
+    error_image = "assets/"
 
+def error_prompt(message):
+    image = "assets/error.png"
+    return easygui.msgbox(message, image=image, title="Error")
+    
 Builder.load_string("""
 <folder_selectScreen>:
     BoxLayout:
@@ -79,6 +87,7 @@ class folder_selectScreen(Screen):
     def update_selected(self):
         global continue_allowed
         selected = easygui.diropenbox()
+        selected_after_check = None
         if selected == None:
             selected_after_check = self.selected
             continue_allowed = False
@@ -92,7 +101,7 @@ class folder_selectScreen(Screen):
                 if continue_allowed == True:
                     self.manager.current = "image_amount_and_image_dimensions"
         except NameError:
-            easygui.msgbox("No folder selected")
+            error_prompt("No Folder Selected")
 
 
 
