@@ -2,6 +2,7 @@ from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.properties import StringProperty
 from kivy.properties import NumericProperty
+from kivy.properties import ListProperty
 import random
 import easygui
 from kivy.uix.boxlayout import BoxLayout
@@ -122,6 +123,49 @@ Builder.load_string("""
                 on_release:
                     root.continue_or_not()
 
+<Search_termsScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text : 'Select Search Terms:'
+        GridLayout:
+            cols : 3
+            rows: 3
+            ToggleButton:
+                id : Lake
+                text: 'Lake'
+            ToggleButton:
+                id : River
+                text: 'River'
+            ToggleButton:
+                id : Sunset
+                text: 'Sunset'
+            ToggleButton:
+                id : Sky
+                text: 'Sky'
+            ToggleButton:
+                id : Ocean
+                text: 'Ocean'
+            ToggleButton:
+                id : Moon
+                text: 'Moon'
+            ToggleButton:
+                id : Urban
+                text: 'Urban'
+            ToggleButton:
+                id : Cityscape
+                text: 'Cityscape'
+            ToggleButton:
+                id : Cloudscape
+                text: 'Cloudscape'
+                on_press: 
+                    root.press('Cloudscape',root.selected_terms)
+                    root.update_selected_string(root.selected_terms)
+                on_release: 
+                    root.release('Cloudscape',root.selected_terms)
+                    root.update_selected_string(root.selected_terms)
+        Label:
+            text : 'You Have Selected: ' + root.selected_string
 """)
 
 class folder_selectScreen(Screen):
@@ -175,11 +219,21 @@ class image_amountScreen(Screen):
         if not continue_allowed == None:
             if continue_allowed == True:
                 self.manager.transition.direction = 'left'
-                self.manager.current = "image_dimensions"
+                self.manager.current = "search_terms"
 
 
-class image_dimensionsScreen(Screen):
-    pass
+class search_termsScreen(Screen):
+    selected_terms = []
+
+    def press(self,pressed,selected_terms):
+        selected_terms.append(pressed)
+    def release(self,released,selected_terms):
+        selected_terms.remove(released)
+    def update_selected_string(self,selected_terms):
+        global selected_string
+        selected_string = ", ".join(str(x) for x in selected_terms)
+        print(selected_string)
+    selected_string = selected_string
 
 
 
@@ -189,7 +243,7 @@ class Download_Background_ImagesApp(App):
         sm = ScreenManager()
         sm.add_widget(folder_selectScreen(name="folder_select"))
         sm.add_widget(image_amountScreen(name="image_amount"))
-        sm.add_widget(image_dimensionsScreen(name="image_dimensions"))
+        sm.add_widget(search_termsScreen(name="search_terms"))
         
         return sm
 
