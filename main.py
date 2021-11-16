@@ -14,7 +14,6 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
 import os
 import requests
-
 from tkinter import messagebox
 from tkinter import Tk
 root = Tk()
@@ -32,11 +31,12 @@ def __init__():
         os.rmdir("assets")
     if not "assets" in os.listdir():
         os.mkdir("assets")
-    if not "config.json" in os.listdir("assets"):
-        config = open("assets\\config.json", "w")
+    if not "config.txt" in os.listdir("assets"):
+        config = open("assets\\config.txt", "w")
         config.write
         config.close
 
+config = {'target_folder':'', 'image_amount':'', 'search_terms':''}
 
 def error_prompt(message):
     prompt = messagebox.showinfo(title = "Error",message = message)
@@ -134,38 +134,55 @@ Builder.load_string("""
             ToggleButton:
                 id : Lake
                 text: 'Lake'
+                on_state: root.select('Lake')
             ToggleButton:
                 id : River
                 text: 'River'
+                on_state: root.select('River')
             ToggleButton:
                 id : Sunset
                 text: 'Sunset'
+                on_state: root.select('Sunset')
             ToggleButton:
                 id : Sky
                 text: 'Sky'
+                on_state: root.select('Sky')
             ToggleButton:
                 id : Ocean
                 text: 'Ocean'
+                on_state: root.select('Ocean')
             ToggleButton:
                 id : Moon
                 text: 'Moon'
+                on_state: root.select('Moon')
             ToggleButton:
                 id : Urban
                 text: 'Urban'
+                on_state: root.select('Urban')
             ToggleButton:
                 id : Cityscape
                 text: 'Cityscape'
+                on_state: root.select('Cityscape')
             ToggleButton:
                 id : Cloudscape
                 text: 'Cloudscape'
-                on_press: 
-                    root.press('Cloudscape',root.selected_terms)
-                    root.update_selected_string(root.selected_terms)
-                on_release: 
-                    root.release('Cloudscape',root.selected_terms)
-                    root.update_selected_string(root.selected_terms)
+                on_state: root.select('Cloudscape')
         Label:
-            text : 'You Have Selected: ' + root.selected_string
+            text : 'You Have Selected: '
+        BoxLayout:
+
+            orientation: 'horizontal'
+            Button:
+                id : previous1
+                text : 'Previous'
+                on_release:
+                    root.manager.transition.direction = 'right'
+                    root.manager.current = "image_amount"
+            Button:
+                id: continue2
+                text: 'Continue'
+                on_release:
+                    root.continue_or_not()
 """)
 
 class folder_selectScreen(Screen):
@@ -192,6 +209,9 @@ class folder_selectScreen(Screen):
                 if continue_allowed == True:
                     self.manager.transition.direction = 'left'
                     self.manager.current = "image_amount"
+                    config.__setitem__("target_folder",self.selected)
+                    print(config)
+                        
         except NameError:
             error_prompt("No Folder Selected")
 
@@ -215,26 +235,31 @@ class image_amountScreen(Screen):
             continue_allowed = True
         else:
             error_prompt("Selected Amount out of range 1-100000")
-        
-        if not continue_allowed == None:
-            if continue_allowed == True:
-                self.manager.transition.direction = 'left'
-                self.manager.current = "search_terms"
+        if continue_allowed == True:
+            self.manager.transition.direction = 'left'
+            self.manager.current = "search_terms"
+            config.__setitem__("image_amount", self.input)
+            print(config)
 
-
+search_terms = []
 class search_termsScreen(Screen):
-    selected_terms = []
+    def select(self,term):
+        global config
+        global search_terms
+        if not term in search_terms:
+            search_terms.append(term)
+        else:
+            search_terms.remove(term)
 
-    def press(self,pressed,selected_terms):
-        selected_terms.append(pressed)
-    def release(self,released,selected_terms):
-        selected_terms.remove(released)
-    def update_selected_string(self,selected_terms):
-        global selected_string
-        selected_string = ", ".join(str(x) for x in selected_terms)
-        print(selected_string)
-    selected_string = selected_string
-
+    def continue_or_not(self):
+        config.__setitem__("search_terms", str(search_terms))
+        if not search_terms == []:
+            self.manager.transition.direction ='left'
+            self.manager.current = "script_run"
+        else: 
+            error_prompt("No Search Terms Selected")
+class script_runScreen(Screen):
+    pass
 
 
 class Download_Background_ImagesApp(App):
@@ -244,6 +269,7 @@ class Download_Background_ImagesApp(App):
         sm.add_widget(folder_selectScreen(name="folder_select"))
         sm.add_widget(image_amountScreen(name="image_amount"))
         sm.add_widget(search_termsScreen(name="search_terms"))
+        sm.add_widget(script_runScreen(name="script_run"))
         
         return sm
 
