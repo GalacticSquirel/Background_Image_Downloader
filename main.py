@@ -14,10 +14,12 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.lang import Builder
 import os
 import requests
+
+from kivy.uix.togglebutton import ToggleButton
 from tkinter import messagebox
 from tkinter import Tk
-root = Tk()
-root.withdraw()
+root1 = Tk()
+root1.withdraw()
 user_screen_width, user_screen_height= pyautogui.size()
 program_width = user_screen_width/3
 program_height = user_screen_height/2
@@ -129,7 +131,8 @@ Builder.load_string("""
         Label:
             text : 'Select Search Terms:'
         GridLayout:
-            cols : 3
+            id: grid
+            cols : 6
             rows: 3
             ToggleButton:
                 id : Lake
@@ -167,10 +170,18 @@ Builder.load_string("""
                 id : Cloudscape
                 text: 'Cloudscape'
                 on_state: root.select('Cloudscape')
-        Label:
-            text : 'You Have Selected: '
         BoxLayout:
-
+            orientation: 'horizontal'
+            TextInput:
+                id:textinput
+                hint_text : 'Enter Custom Search'
+            Button:
+                text : 'Add'
+                on_press: root.get_text()
+        Label:
+            id: search_terms_for_label
+            text : 'You Have Selected: ' + root.search_terms_for_label
+        BoxLayout:
             orientation: 'horizontal'
             Button:
                 id : previous1
@@ -183,6 +194,10 @@ Builder.load_string("""
                 text: 'Continue'
                 on_release:
                     root.continue_or_not()
+<script_runScreen>:
+    BoxLayout:
+        Label: 
+            text : str(root.config)
 """)
 
 class folder_selectScreen(Screen):
@@ -204,12 +219,13 @@ class folder_selectScreen(Screen):
             continue_allowed = True
         self.selected = selected_after_check
     def continue_or_not(self):
+        global config
         try:
             if not continue_allowed == None:
                 if continue_allowed == True:
                     self.manager.transition.direction = 'left'
                     self.manager.current = "image_amount"
-                    config.__setitem__("target_folder",self.selected)
+                    config.__setitem__("target_folder",str(self.selected))
                     print(config)
                         
         except NameError:
@@ -236,13 +252,17 @@ class image_amountScreen(Screen):
         else:
             error_prompt("Selected Amount out of range 1-100000")
         if continue_allowed == True:
+            global config
             self.manager.transition.direction = 'left'
             self.manager.current = "search_terms"
-            config.__setitem__("image_amount", self.input)
+            config.__setitem__("image_amount", str(self.input))
             print(config)
 
 search_terms = []
 class search_termsScreen(Screen):
+    search_terms_for_label = StringProperty()
+    def __init__(self, **kwargs):
+        super(search_termsScreen, self).__init__(**kwargs)
     def select(self,term):
         global config
         global search_terms
@@ -250,17 +270,37 @@ class search_termsScreen(Screen):
             search_terms.append(term)
         else:
             search_terms.remove(term)
+        seperater = ", "
+        self.search_terms_for_label = seperater.join(search_terms)
+    def pressed(self,term):
+        if not term.text in search_terms:
+            search_terms.append(term.text)
+        else:
+            search_terms.remove(term.text)
+        seperater = ", "
+        self.search_terms_for_label = seperater.join(search_terms)
+    def get_text(self):
+        button_name = self.ids.textinput.text
+        new_button = ToggleButton(text=button_name)
+        new_button.bind(on_press = self.pressed)
+        self.ids.grid.add_widget(new_button)
 
     def continue_or_not(self):
+        global config
         config.__setitem__("search_terms", str(search_terms))
+        print(config)
+        with open("assets/config.txt","a+") as config_file:
+            config_file.write(str(config))
+            config_file.close()
         if not search_terms == []:
             self.manager.transition.direction ='left'
             self.manager.current = "script_run"
         else: 
             error_prompt("No Search Terms Selected")
 class script_runScreen(Screen):
-    pass
-
+    config = open('assets/config.txt', 'a+').read().rstrip()
+    print 
+    config
 
 class Download_Background_ImagesApp(App):
     def build(self):
