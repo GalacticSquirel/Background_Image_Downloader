@@ -21,8 +21,8 @@ from tkinter import Tk
 root1 = Tk()
 root1.withdraw()
 user_screen_width, user_screen_height= pyautogui.size()
-program_width = user_screen_width/3
-program_height = user_screen_height/2
+program_width = user_screen_width/2
+program_height = user_screen_height/1.4
 Window.size = (program_width, program_height)
 
 def __init__():    
@@ -39,6 +39,13 @@ def __init__():
         config.close
 
 config = {'target_folder':'', 'image_amount':'', 'search_terms':''}
+
+from kivy.uix.label import Label
+import webbrowser
+
+"""A kivy widget that implements a hyperlink"""
+import webbrowser
+
 
 def error_prompt(message):
     prompt = messagebox.showinfo(title = "Error",message = message)
@@ -62,7 +69,16 @@ Builder.load_string("""
             id: continue1
             text: 'Continue'
             on_release: root.continue_or_not()
-
+    FloatLayout:
+        Button:
+            background_normal: ''
+            background_color: 0, 0, 0, 0
+            text: 'All Images Downloaded Are Sourced From [color=0645AD]https://www.pexels.com/[u][/color]'
+            markup: True 
+            size_hint: 1,.05
+            pos_hint: {'x':0, 'y':0}
+            on_press: root.web()
+            
 <image_amountScreen>:
     BoxLayout:
         spacing: 1
@@ -84,17 +100,9 @@ Builder.load_string("""
                 text: '-10'
                 on_press:
                     root.update_image_amount_m('10')
-            Button:
-                text: '-1'
-                on_press:
-                    root.update_image_amount_m('1')
             Label:
                 id: input
                 text: str(root.input)
-            Button:
-                text: '+1'
-                on_press:
-                    root.update_image_amount_p('1')
             Button:
                 text: '+10'
                 on_press:
@@ -108,7 +116,7 @@ Builder.load_string("""
                 on_press:
                     root.update_image_amount_p('1000')
         Button:
-            text: 'reset'
+            text: 'Reset'
             on_press: root.reset()
         BoxLayout:
 
@@ -124,6 +132,15 @@ Builder.load_string("""
                 text: 'Continue'
                 on_release:
                     root.continue_or_not()
+    FloatLayout:
+        Button:
+            background_normal: ''
+            background_color: 0, 0, 0, 0
+            text: 'All Images Downloaded Are Sourced From [color=0645AD]https://www.pexels.com/[u][/color]'
+            markup: True 
+            size_hint: 1,.05
+            pos_hint: {'x':0, 'y':0}
+            on_press: root.web()
 
 <Search_termsScreen>:
     BoxLayout:
@@ -133,7 +150,7 @@ Builder.load_string("""
         GridLayout:
             id: grid
             cols : 6
-            rows: 3
+            rows: 6
             ToggleButton:
                 id : Lake
                 text: 'Lake'
@@ -177,7 +194,10 @@ Builder.load_string("""
                 hint_text : 'Enter Custom Search'
             Button:
                 text : 'Add'
-                on_press: root.get_text()
+                on_press: root.get_text(root.added_search_terms)
+            Button:
+                text : 'Remove All'
+                on_press: root.remove_all()
         Label:
             id: search_terms_for_label
             text : 'You Have Selected: ' + root.search_terms_for_label
@@ -194,16 +214,32 @@ Builder.load_string("""
                 text: 'Continue'
                 on_release:
                     root.continue_or_not()
+    FloatLayout:
+        Button:
+            background_normal: ''
+            background_color: 0, 0, 0, 0
+            text: 'All Images Downloaded Are Sourced From [color=0645AD]https://www.pexels.com/[u][/color]'
+            markup: True 
+            size_hint: 1,.05
+            pos_hint: {'x':0, 'y':0}
+            on_press: root.web()
 <script_runScreen>:
     BoxLayout:
         Label: 
             text : str(root.config)
+    FloatLayout:
+        Button:
+            background_normal: ''
+            background_color: 0, 0, 0, 0
+            text: 'All Images Downloaded Are Sourced From [color=0645AD]https://www.pexels.com/[u][/color]'
+            markup: True 
+            size_hint: 1,.05
+            pos_hint: {'x':0, 'y':0}
+            on_press: root.web()
 """)
 
 class folder_selectScreen(Screen):
-    
     selected= StringProperty()
-    
     def __init__(self, **kwargs):
         super(folder_selectScreen, self).__init__(**kwargs)
         self.selected = "Nothing"
@@ -230,33 +266,40 @@ class folder_selectScreen(Screen):
                         
         except NameError:
             error_prompt("No Folder Selected")
+    def web(self):
+        webbrowser.open('https://www.pexels.com')
+
 
 
 class image_amountScreen(Screen):
     input = NumericProperty()
     def __init__(self, **kwargs):
         super(image_amountScreen, self).__init__(**kwargs)
-        self.input = 1
+        self.input = 10
     def update_image_amount_p(self,amount):
         self.input = int(self.input) + int(amount)
     def update_image_amount_m(self,amount):
         if not self.input == 0:
-            if not int(self.input) - int(amount) < 0:
+            if not int(self.input) - int(amount) < 10:
                 self.input = int(self.input) - int(amount)
+            else:
+                self.input = 10
     def reset(self):
         self.input = 1
     def continue_or_not(self):
         continue_allowed = False
-        if 1 <= self.input <=1000000:
+        if 10 <= self.input <=1000000:
             continue_allowed = True
         else:
-            error_prompt("Selected Amount out of range 1-100000")
+            error_prompt("Selected Amount out of range 10-100000")
         if continue_allowed == True:
             global config
             self.manager.transition.direction = 'left'
             self.manager.current = "search_terms"
             config.__setitem__("image_amount", str(self.input))
             print(config)
+    def web(self):
+        webbrowser.open('https://www.pexels.com')
 
 search_terms = []
 class search_termsScreen(Screen):
@@ -279,12 +322,29 @@ class search_termsScreen(Screen):
             search_terms.remove(term.text)
         seperater = ", "
         self.search_terms_for_label = seperater.join(search_terms)
-    def get_text(self):
-        button_name = self.ids.textinput.text
-        new_button = ToggleButton(text=button_name)
-        new_button.bind(on_press = self.pressed)
-        self.ids.grid.add_widget(new_button)
+    added_search_terms = []
+    
+    def get_text(self,added_search_terms):
+        if not self.ids.textinput.text == "":
+            if not self.ids.textinput.text in added_search_terms:
+                button_name = self.ids.textinput.text
+                new_button = ToggleButton(text=button_name)
+                new_button.bind(on_press = self.pressed)
+                try:
+                    self.ids.grid.add_widget(new_button)
+                    added_search_terms.append(self.ids.textinput.text)
+                    self.ids.textinput.text = ""
+                except:
+                    error_prompt("Too Many Search Terms Added")
+            else:
+                error_prompt("Already Added")
+        else:
+            error_prompt("Nothing In The Input Box")
+    
+    def remove_all(self):
+        self.ids.grid.clear_widgets()
 
+    search_terms = search_terms
     def continue_or_not(self):
         global config
         config.__setitem__("search_terms", str(search_terms))
@@ -297,10 +357,14 @@ class search_termsScreen(Screen):
             self.manager.current = "script_run"
         else: 
             error_prompt("No Search Terms Selected")
+    def web(self):
+        webbrowser.open('https://www.pexels.com')
+
 class script_runScreen(Screen):
     config = open('assets/config.txt', 'a+').read().rstrip()
-    print 
-    config
+    def web(self):
+        webbrowser.open('https://www.pexels.com')
+
 
 class Download_Background_ImagesApp(App):
     def build(self):
